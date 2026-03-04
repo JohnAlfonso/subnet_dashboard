@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Process - SN71 Session Manager</title>
+    <link rel="icon" type="image/x-icon" href="/asset/modern_favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/asset/modern_icon_16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/asset/modern_icon_32.png">
+    <script>
+        (function(){ try { var t = localStorage.getItem('sn71-dashboard-theme'); if (t === 'dark') document.documentElement.classList.add('theme-dark'); } catch (e) {} })();
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            transition: background-color 0.25s ease;
+        }
+        html.theme-dark, html.theme-dark body { background-color: #0f172a; }
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .sidebar-logo {
+            width: 170px;
+            height: auto;
+            margin: 0 auto 10px;
+            display: block;
+            border-radius: 8px;
+        }
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .sidebar-menu a:hover {
+            background-color: #f8f9fa;
+            border-left-color: #007bff;
+        }
+        .sidebar-menu a.active {
+            background-color: #e7f1ff;
+            color: #007bff;
+            border-left-color: #007bff;
+            font-weight: bold;
+        }
+        html.theme-dark .sidebar { background-color: #1e293b; border-right-color: #334155; }
+        html.theme-dark .sidebar-header { background-color: #0369a1; }
+        html.theme-dark .sidebar-menu a { color: #e2e8f0; }
+        html.theme-dark .sidebar-menu a:hover { background-color: #334155; border-left-color: #38bdf8; }
+        html.theme-dark .sidebar-menu a.active { background-color: #0c4a6e; color: #7dd3fc; border-left-color: #38bdf8; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid #dee2e6; background-color: #f8f9fa; }
+        html.theme-dark .sidebar-footer { border-top-color: #334155; background-color: #0f172a; }
+        .sidebar-theme-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        html.theme-dark .sidebar-theme-label { color: #94a3b8; }
+        .theme-toggle { display: flex; gap: 0; background-color: #e2e8f0; border-radius: 10px; padding: 4px; }
+        html.theme-dark .theme-toggle { background-color: #334155; }
+        .theme-toggle button { flex: 1; border: none; background: transparent; color: #64748b; padding: 8px 14px; font-size: 0.9rem; font-weight: 500; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        html.theme-dark .theme-toggle button { color: #94a3b8; }
+        .theme-toggle button:hover { color: #007bff; background-color: rgba(0,123,255,0.1); }
+        html.theme-dark .theme-toggle button:hover { color: #38bdf8; background-color: rgba(56,189,248,0.15); }
+        .theme-toggle button.active { background-color: #fff; color: #007bff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        html.theme-dark .theme-toggle button.active { background-color: #475569; color: #7dd3fc; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .top-bar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        html.theme-dark .top-bar { background-color: #1e293b; border-bottom-color: #334155; }
+        html.theme-dark .top-bar h2 { color: #f1f5f9; }
+        html.theme-dark .top-bar .text-muted { color: #94a3b8 !important; }
+        html.theme-dark .content-area { background-color: #0f172a; }
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        html.theme-dark .table-container { background-color: #1e293b; }
+        html.theme-dark .table-container .table-responsive { background-color: transparent; }
+        html.theme-dark .table { color: #e2e8f0; background-color: #1e293b !important; }
+        html.theme-dark .table thead th { background-color: #0369a1 !important; color: #fff !important; border-bottom-color: #0c4a6e !important; }
+        html.theme-dark .table thead th:hover { background-color: #0284c7 !important; }
+        html.theme-dark .table td,
+        html.theme-dark .table th { border-color: #334155 !important; color: #e2e8f0 !important; }
+        /* Bootstrap 5 uses inset box-shadow for stripes - clear it so our bg shows */
+        html.theme-dark .table-striped tbody tr > * { box-shadow: none !important; }
+        html.theme-dark .table-hover tbody tr:hover > * { box-shadow: none !important; }
+        /* Cell-level background and text (Bootstrap targets cells) */
+        html.theme-dark .table tbody td { background-color: #1e293b !important; color: #e2e8f0 !important; }
+        html.theme-dark .table-striped tbody tr:nth-of-type(odd) td { background-color: #1e293b !important; }
+        html.theme-dark .table-striped tbody tr:nth-of-type(even) td { background-color: #334155 !important; }
+        html.theme-dark .table tbody tr:hover td { background-color: #475569 !important; }
+        html.theme-dark .table-hover tbody tr:hover td { background-color: #475569 !important; }
+        html.theme-dark .table-container .text-muted { color: #94a3b8 !important; }
+        html.theme-dark .table-container .form-control { background-color: #0f172a; border-color: #475569; color: #e2e8f0; }
+        html.theme-dark .table-container .form-control::placeholder { color: #64748b; }
+        html.theme-dark .content-area .form-control { background-color: #0f172a; border-color: #475569; color: #e2e8f0; }
+        html.theme-dark .content-area .form-control::placeholder { color: #64748b; }
+        html.theme-dark .content-area .input-group-text { background-color: #334155; border-color: #475569; color: #e2e8f0; }
+        .table {
+            font-size: 0.9rem;
+        }
+        .table th {
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+        }
+        .table th:hover {
+            background-color: #0056b3;
+        }
+        .btn-action {
+            margin: 2px;
+        }
+        .search-bar {
+            margin-bottom: 20px;
+        }
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8rem;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .status-running {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-sleeping {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-stopped {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .status-unknown {
+            background-color: #e5e7eb;
+            color: #374151;
+        }
+        .status-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .status-icon.running {
+            background-color: #10b981;
+        }
+        .status-icon.sleeping {
+            background-color: #3b82f6;
+        }
+        .status-icon.stopped {
+            background-color: #ef4444;
+        }
+        .status-icon.unknown {
+            background-color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/asset/Mark.png" alt="LeadPoet Logo" class="sidebar-logo">
+        </div>
+        <div class="sidebar-menu">
+            <a href="/dashboard">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="/process" class="active">
+                <i class="bi bi-gear"></i> Process
+            </a>
+            <a href="/session">
+                <i class="bi bi-clock-history"></i> Session
+            </a>
+            <a href="/api-credit">
+                <i class="bi bi-credit-card"></i> API Credit
+            </a>
+            <a href="/">
+                <i class="bi bi-gem"></i> Miners
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-theme-label"><i class="bi bi-palette"></i> Theme</div>
+            <div class="theme-toggle">
+                <button type="button" id="themeLight" title="Light theme"><i class="bi bi-sun"></i> Light</button>
+                <button type="button" id="themeDark" title="Dark theme"><i class="bi bi-moon"></i> Dark</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h2 class="mb-0">Process Management</h2>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted">Total Records: {{ records|length }}</span>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshPage()" title="Refresh">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <form method="get" action="/process" class="search-bar">
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search in all fields..." value="{{ search }}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        {% if search %}
+                        <a href="/process" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </a>
+                        {% endif %}
+                    </div>
+                    </form>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button onclick="refreshPage()" class="btn btn-primary me-2">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <a href="/process/add" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Add New Process
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('id')">
+                                    ID 
+                                    {% if sort_by == 'id' %}
+                                        <i class="bi bi-arrow-{{ 'down' if order == 'asc' else 'up' }} sort-icon"></i>
+                                    {% endif %}
+                                </th>
+                                <th onclick="sortTable('process_name')">
+                                    Process Name
+                                    {% if sort_by == 'process_name' %}
+                                        <i class="bi bi-arrow-{{ 'down' if order == 'asc' else 'up' }} sort-icon"></i>
+                                    {% endif %}
+                                </th>
+                                <th onclick="sortTable('ip')">
+                                    IP Address
+                                    {% if sort_by == 'ip' %}
+                                        <i class="bi bi-arrow-{{ 'down' if order == 'asc' else 'up' }} sort-icon"></i>
+                                    {% endif %}
+                                </th>
+                                <th onclick="sortTable('process_status')">
+                                    Status
+                                    {% if sort_by == 'process_status' %}
+                                        <i class="bi bi-arrow-{{ 'down' if order == 'asc' else 'up' }} sort-icon"></i>
+                                    {% endif %}
+                                </th>
+                                <th onclick="sortTable('monitoring_time')">
+                                    Monitoring Time
+                                    {% if sort_by == 'monitoring_time' %}
+                                        <i class="bi bi-arrow-{{ 'down' if order == 'asc' else 'up' }} sort-icon"></i>
+                                    {% endif %}
+                                </th>
+                                <th style="cursor: default;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                            <tr>
+                                <td>{{ record.id }}</td>
+                                <td>{{ record.process_name }}</td>
+                                <td>{{ record.ip }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ record.process_status }}">
+                                        <span class="status-icon {{ record.process_status }}"></span>
+                                        {{ record.process_status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ record.monitoring_time }}</td>
+                                <td>
+                                    <a href="/process/edit/{{ record.id }}" class="btn btn-sm btn-warning btn-action">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form method="post" action="/process/delete/{{ record.id }}" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger btn-action" 
+                                                onclick="return confirm('Are you sure you want to delete this process?')">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not records %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">No processes found</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshPage() {
+            window.location.reload();
+        }
+        function sortTable(column) {
+            const currentSort = "{{ sort_by }}";
+            const currentOrder = "{{ order }}";
+            const currentSearch = "{{ search }}";
+            
+            let newOrder = 'asc';
+            if (column === currentSort && currentOrder === 'asc') {
+                newOrder = 'desc';
+            }
+            
+            let url = `/process?sort_by=${column}&order=${newOrder}`;
+            if (currentSearch) {
+                url += `&search=${encodeURIComponent(currentSearch)}`;
+            }
+            
+            window.location.href = url;
+        }
+        (function(){
+            var THEME_KEY = 'sn71-dashboard-theme';
+            function getStoredTheme() { try { var t = localStorage.getItem(THEME_KEY); return (t === 'dark' || t === 'light') ? t : 'light'; } catch (e) { return 'light'; } }
+            function setTheme(theme) {
+                var isDark = theme === 'dark';
+                document.documentElement.classList.toggle('theme-dark', isDark);
+                var lightBtn = document.getElementById('themeLight'), darkBtn = document.getElementById('themeDark');
+                if (lightBtn) { lightBtn.classList.toggle('active', !isDark); lightBtn.setAttribute('aria-pressed', !isDark); }
+                if (darkBtn) { darkBtn.classList.toggle('active', isDark); darkBtn.setAttribute('aria-pressed', isDark); }
+                try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                setTheme(getStoredTheme());
+                document.getElementById('themeLight') && document.getElementById('themeLight').addEventListener('click', function() { setTheme('light'); });
+                document.getElementById('themeDark') && document.getElementById('themeDark').addEventListener('click', function() { setTheme('dark'); });
+            });
+        })();
+    </script>
+</body>
+</html>

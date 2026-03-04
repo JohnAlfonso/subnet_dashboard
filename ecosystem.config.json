@@ -1,0 +1,21 @@
+{
+  "apps": [{
+    "name": "leadpoet-manage",
+    "script": "app.py",
+    "cwd": "/work/jnh/leadpoet_manage",
+    "interpreter": "/work/jnh/leadpoet_manage/venv/bin/python",
+    "instances": 1,
+    "exec_mode": "fork",
+    "watch": false,
+    "autorestart": true,
+    "max_restarts": 10,
+    "min_uptime": "10s",
+    "env": {
+      "PYTHONUNBUFFERED": "1"
+    },
+    "error_file": "/work/jnh/leadpoet_manage/logs/pm2-error.log",
+    "out_file": "/work/jnh/leadpoet_manage/logs/pm2-out.log",
+    "log_date_format": "YYYY-MM-DD HH:mm:ss Z",
+    "merge_logs": true
+  }]
+}

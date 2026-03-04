@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Credit - SN71 Session Manager</title>
+    <link rel="icon" type="image/x-icon" href="/asset/modern_favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/asset/modern_icon_16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/asset/modern_icon_32.png">
+    <script>
+        (function(){ try { var t = localStorage.getItem('sn71-dashboard-theme'); if (t === 'dark') document.documentElement.classList.add('theme-dark'); } catch (e) {} })();
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f8f9fa;
+            transition: background-color 0.25s ease;
+        }
+        html.theme-dark, html.theme-dark body { background-color: #0f172a; }
+        .sidebar {
+            width: 220px;
+            background-color: #ffffff;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+        }
+        .sidebar-logo {
+            width: 170px;
+            height: auto;
+            margin: 0 auto 10px;
+            display: block;
+            border-radius: 8px;
+        }
+        .sidebar-menu {
+            flex: 1;
+            padding: 20px 0;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            font-size: 1.1rem;
+            border-left: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .sidebar-menu a:hover {
+            background-color: #f8f9fa;
+            border-left-color: #007bff;
+        }
+        .sidebar-menu a.active {
+            background-color: #e7f1ff;
+            color: #007bff;
+            border-left-color: #007bff;
+            font-weight: bold;
+        }
+        html.theme-dark .sidebar { background-color: #1e293b; border-right-color: #334155; }
+        html.theme-dark .sidebar-header { background-color: #0369a1; }
+        html.theme-dark .sidebar-menu a { color: #e2e8f0; }
+        html.theme-dark .sidebar-menu a:hover { background-color: #334155; border-left-color: #38bdf8; }
+        html.theme-dark .sidebar-menu a.active { background-color: #0c4a6e; color: #7dd3fc; border-left-color: #38bdf8; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid #dee2e6; background-color: #f8f9fa; }
+        html.theme-dark .sidebar-footer { border-top-color: #334155; background-color: #0f172a; }
+        .sidebar-theme-label { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        html.theme-dark .sidebar-theme-label { color: #94a3b8; }
+        .theme-toggle { display: flex; gap: 0; background-color: #e2e8f0; border-radius: 10px; padding: 4px; }
+        html.theme-dark .theme-toggle { background-color: #334155; }
+        .theme-toggle button { flex: 1; border: none; background: transparent; color: #64748b; padding: 8px 14px; font-size: 0.9rem; font-weight: 500; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        html.theme-dark .theme-toggle button { color: #94a3b8; }
+        .theme-toggle button:hover { color: #007bff; background-color: rgba(0,123,255,0.1); }
+        html.theme-dark .theme-toggle button:hover { color: #38bdf8; background-color: rgba(56,189,248,0.15); }
+        .theme-toggle button.active { background-color: #fff; color: #007bff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        html.theme-dark .theme-toggle button.active { background-color: #475569; color: #7dd3fc; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .top-bar {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        html.theme-dark .top-bar { background-color: #1e293b; border-bottom-color: #334155; }
+        html.theme-dark .content-area { background-color: #0f172a; }
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 80px;
+        }
+        .credit-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+        }
+        .credit-card:hover {
+            transform: translateY(-5px);
+        }
+        .credit-card h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+        .credit-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .credit-card.total {
+            border-left: 5px solid #28a745;
+        }
+        .credit-card.total .credit-value {
+            color: #28a745;
+        }
+        .credit-card.usage {
+            border-left: 5px solid #ffc107;
+        }
+        .credit-card.usage .credit-value {
+            color: #ffc107;
+        }
+        .credit-card.remaining {
+            border-left: 5px solid #007bff;
+        }
+        .credit-card.remaining .credit-value {
+            color: #007bff;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .error-alert {
+            display: none;
+            margin-bottom: 20px;
+        }
+        .credit-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+        .percentage-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        .percentage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #0056b3);
+            transition: width 0.5s ease;
+        }
+        .percentage-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .credit-info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            height: auto;
+        }
+        .openrouter-panel {
+            background: #ffffff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 16px;
+        }
+        .table-wrap {
+            overflow-x: auto;
+        }
+        .table thead th {
+            white-space: nowrap;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6c757d;
+        }
+        .credits-stack {
+            min-width: 220px;
+            font-size: 0.85rem;
+            line-height: 1.35;
+        }
+        .badge-soft {
+            background-color: #eef2ff;
+            color: #3730a3;
+        }
+        .or-inline-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .or-empty {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+        html.theme-dark .credit-card { background-color: #1e293b; }
+        html.theme-dark .credit-card h3 { color: #94a3b8; }
+        html.theme-dark .credit-info-card { background-color: #1e293b; }
+        html.theme-dark .content-area h3 { color: #f1f5f9; }
+        html.theme-dark .openrouter-panel { background-color: #1e293b; }
+        html.theme-dark .top-bar h2 { color: #f1f5f9; }
+        html.theme-dark .openrouter-panel h5 { color: #f1f5f9; }
+        html.theme-dark .openrouter-panel .form-label { color: #cbd5e1; }
+        html.theme-dark .openrouter-panel .form-control {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #e2e8f0;
+        }
+        html.theme-dark .openrouter-panel .form-control:focus {
+            background-color: #0f172a;
+            border-color: #38bdf8;
+            color: #e2e8f0;
+            box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.2);
+        }
+        html.theme-dark .openrouter-panel .form-control::placeholder { color: #64748b; }
+        html.theme-dark .openrouter-panel .btn-outline-primary {
+            color: #7dd3fc;
+            border-color: #38bdf8;
+        }
+        html.theme-dark .openrouter-panel .btn-outline-primary:hover {
+            background-color: #0369a1;
+            border-color: #0369a1;
+            color: #f8fafc;
+        }
+        html.theme-dark .table { color: #e2e8f0; }
+        html.theme-dark .table thead th { color: #94a3b8; }
+        html.theme-dark .table > :not(caption) > * > * { border-bottom-color: #334155; }
+        html.theme-dark .table-hover > tbody > tr:hover > * {
+            --bs-table-accent-bg: #334155;
+            color: #f8fafc;
+        }
+        html.theme-dark .openrouter-keys-table {
+            background-color: #6c757d;
+            color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        html.theme-dark .openrouter-keys-table thead th {
+            background-color: #5a6268;
+            color: #ffffff;
+            border-bottom-color: #495057;
+        }
+        html.theme-dark .openrouter-keys-table tbody td {
+            background-color: #6c757d;
+            color: #ffffff;
+            border-bottom-color: #5a6268;
+        }
+        html.theme-dark .openrouter-keys-table.table-hover > tbody > tr:hover > * {
+            --bs-table-accent-bg: #5a6268;
+            color: #ffffff;
+        }
+        html.theme-dark .openrouter-keys-table .btn-edit-key {
+            color: #67e8f9;
+            border-color: #22d3ee;
+        }
+        html.theme-dark .openrouter-keys-table .btn-edit-key:hover {
+            color: #ffffff;
+            background-color: #0891b2;
+            border-color: #0891b2;
+        }
+        html.theme-dark .openrouter-keys-table .or-empty {
+            color: #ffffff;
+        }
+        html.theme-dark .or-empty { color: #94a3b8; }
+        html.theme-dark .badge-soft { background-color: #1e3a8a; color: #bfdbfe; }
+        html.theme-dark .text-muted { color: #94a3b8 !important; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <img src="/asset/Mark.png" alt="LeadPoet Logo" class="sidebar-logo">
+        </div>
+        <div class="sidebar-menu">
+            <a href="/dashboard">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="/process">
+                <i class="bi bi-gear"></i> Process
+            </a>
+            <a href="/session">
+                <i class="bi bi-clock-history"></i> Session
+            </a>
+            <a href="/api-credit" class="active">
+                <i class="bi bi-credit-card"></i> API Credit
+            </a>
+            <a href="/">
+                <i class="bi bi-gem"></i> Miners
+            </a>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-theme-label"><i class="bi bi-palette"></i> Theme</div>
+            <div class="theme-toggle">
+                <button type="button" id="themeLight" title="Light theme"><i class="bi bi-sun"></i> Light</button>
+                <button type="button" id="themeDark" title="Dark theme"><i class="bi bi-moon"></i> Dark</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <h2 class="mb-0">API Credits</h2>
+            <button class="btn btn-primary" onclick="refreshCredits()">
+                <i class="bi bi-arrow-clockwise"></i> Refresh All
+            </button>
+        </div>
+
+        <div class="content-area">
+            <!-- OpenRouter Section -->
+            <div class="mb-4">
+                <h3 class="mb-4"><i class="bi bi-robot"></i> OpenRouter API</h3>
+
+                <div class="alert alert-danger error-alert" id="errorAlertOpenRouter">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="errorMessageOpenRouter"></span>
+                </div>
+
+                <div class="loading-spinner" id="loadingSpinnerOpenRouter">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading OpenRouter credit information...</p>
+                </div>
+
+                <div id="creditContentOpenRouter">
+                    <div class="openrouter-panel">
+                        <h5 class="mb-3">Add OpenRouter Key</h5>
+                        <form id="openRouterKeyForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="openRouterEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="openRouterEmail" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="openRouterApiKey" class="form-label">API Key</label>
+                                <input type="text" class="form-control" id="openRouterApiKey" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="openRouterLabel" class="form-label">Label (optional)</label>
+                                <input type="text" class="form-control" id="openRouterLabel">
+                            </div>
+                            <div class="col-md-1 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="openrouter-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Managed Keys</h5>
+                            <button class="btn btn-outline-primary btn-sm" onclick="refreshOpenRouterSection()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh Keys
+                            </button>
+                        </div>
+                        <div class="table-wrap">
+                            <table class="table table-hover align-middle mb-0 openrouter-keys-table">
+                                <thead>
+                                    <tr>
+                                        <th>Label</th>
+                                        <th>Email</th>
+                                        <th>API Key</th>
+                                        <th>Status</th>
+                                        <th>Credits</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="openRouterKeysTableBody">
+                                    <tr><td colspan="6" class="or-empty">Loading keys...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ScrapingDog Section -->
+            <div class="mb-4">
+                <h3 class="mb-4"><i class="bi bi-search"></i> ScrapingDog API</h3>
+                
+                <div class="alert alert-danger error-alert" id="errorAlertScrapingDog">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span id="errorMessageScrapingDog"></span>
+                </div>
+
+                <div class="loading-spinner" id="loadingSpinnerScrapingDog">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Loading ScrapingDog credit information...</p>
+                </div>
+
+                <div id="creditContentScrapingDog">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="credit-card total" style="min-height: 300px;">
+                                <div class="credit-icon">
+                                    <i class="bi bi-wallet2"></i>
+                                </div>
+                                <h3>Request Limit</h3>
+                                <div class="credit-value" id="requestLimitScrapingDog">-</div>
+                                <p class="text-muted mb-0">Total available requests</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="credit-card usage" style="min-height: 300px;">
+                                <div class="credit-icon">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                                <h3>Request Used</h3>
+                                <div class="credit-value" id="requestUsedScrapingDog">-</div>
+                                <p class="text-muted mb-0">Requests consumed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="credit-card remaining" style="min-height: 300px;">
+                                <div class="credit-icon">
+                                    <i class="bi bi-piggy-bank"></i>
+                                </div>
+                                <h3>Remaining</h3>
+                                <div class="credit-value" id="remainingScrapingDog">-</div>
+                                <p class="text-muted mb-0">Requests left</p>
+                                <div class="percentage-bar">
+                                    <div class="percentage-fill" id="percentageFillScrapingDog" style="width: 0%"></div>
+                                </div>
+                                <div class="percentage-text" id="percentageTextScrapingDog">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="credit-info-card">
+                                <p class="mb-1"><strong>Provider:</strong> ScrapingDog.com</p>
+                                <p class="mb-0"><strong>Last Updated:</strong> <span id="lastUpdatedScrapingDog">-</span></p>
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+
+            <!-- <div class="row mt-4">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Click the <strong>Refresh All</strong> button above to update all credit information in real-time.
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+
+    <script>
+        // Theme: persist and apply
+        var THEME_KEY = 'sn71-dashboard-theme';
+        function getStoredTheme() { try { var t = localStorage.getItem(THEME_KEY); return (t === 'dark' || t === 'light') ? t : 'light'; } catch (e) { return 'light'; } }
+        function setTheme(theme) {
+            var isDark = theme === 'dark';
+            document.documentElement.classList.toggle('theme-dark', isDark);
+            var lightBtn = document.getElementById('themeLight'), darkBtn = document.getElementById('themeDark');
+            if (lightBtn) { lightBtn.classList.toggle('active', !isDark); lightBtn.setAttribute('aria-pressed', !isDark); }
+            if (darkBtn) { darkBtn.classList.toggle('active', isDark); darkBtn.setAttribute('aria-pressed', isDark); }
+            try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+        }
+        // Load credits on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTheme(getStoredTheme());
+            document.getElementById('themeLight') && document.getElementById('themeLight').addEventListener('click', function() { setTheme('light'); });
+            document.getElementById('themeDark') && document.getElementById('themeDark').addEventListener('click', function() { setTheme('dark'); });
+            loadAllCredits();
+        });
+
+        function formatUsd(value) {
+            const num = Number(value || 0);
+            return '$' + num.toFixed(2);
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function maskApiKey(rawKey) {
+            const key = String(rawKey || '');
+            if (!key) return '-';
+            if (key.length <= 8) return '*'.repeat(key.length);
+            return key.slice(0, 4) + '*'.repeat(Math.max(key.length - 8, 4)) + key.slice(-4);
+        }
+
+        function showOpenRouterError(message) {
+            const errorAlert = document.getElementById('errorAlertOpenRouter');
+            const errorMessage = document.getElementById('errorMessageOpenRouter');
+            errorMessage.textContent = message;
+            errorAlert.style.display = 'block';
+        }
+
+        function hideOpenRouterError() {
+            document.getElementById('errorAlertOpenRouter').style.display = 'none';
+        }
+
+        function normalizeOpenRouterRows(payload) {
+            if (Array.isArray(payload)) return payload;
+            if (Array.isArray(payload?.records)) return payload.records;
+            if (Array.isArray(payload?.keys)) return payload.keys;
+            return [];
+        }
+
+        function renderOpenRouterRows(rows) {
+            const tableBody = document.getElementById('openRouterKeysTableBody');
+            if (!rows.length) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="or-empty">No OpenRouter keys yet. Add one above.</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = rows.map((row) => {
+                const totalCredits = Number(row.total_credits || 0);
+                const totalUsage = Number(row.total_usage || 0);
+                const remaining = Number(
+                    row.remaining !== undefined && row.remaining !== null
+                        ? row.remaining
+                        : (totalCredits - totalUsage)
+                );
+                const status = row.status || (row.error ? 'error' : 'ok');
+                const statusBadge = status === 'ok'
+                    ? '<span class="badge text-bg-success">OK</span>'
+                    : '<span class="badge text-bg-danger">Error</span>';
+                const rowId = row.id;
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(row.label || '-')}</td>
+                        <td>${escapeHtml(row.email || '-')}</td>
+                        <td><span class="badge badge-soft">${escapeHtml(maskApiKey(row.api_key_masked || row.api_key || ''))}</span></td>
+                        <td>${statusBadge}</td>
+                        <td class="credits-stack">
+                            <div><strong>Total:</strong> ${formatUsd(totalCredits)}</div>
+                            <div><strong>Used:</strong> ${formatUsd(totalUsage)}</div>
+                            <div><strong>Remaining:</strong> ${formatUsd(remaining)}</div>
+                            ${row.error ? `<div class="text-danger mt-1">${escapeHtml(row.error)}</div>` : ''}
+                        </td>
+                        <td>
+                            <div class="or-inline-actions">
+                                <button class="btn btn-outline-secondary btn-sm btn-edit-key" onclick="editOpenRouterKey(${rowId})"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteOpenRouterKey(${rowId})"><i class="bi bi-trash"></i></button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="refreshSingleOpenRouterKey(${rowId})"><i class="bi bi-arrow-repeat"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadOpenRouterCredits() {
+            const loadingSpinner = document.getElementById('loadingSpinnerOpenRouter');
+            const creditContent = document.getElementById('creditContentOpenRouter');
+
+            // Show loading, hide error
+            loadingSpinner.style.display = 'block';
+            hideOpenRouterError();
+            creditContent.style.opacity = '0.3';
+
+            try {
+                const response = await fetch('/api/openrouter-keys/credits');
+                if (!response.ok) {
+                    throw new Error('OpenRouter key credits endpoint unavailable');
+                }
+                const payload = await response.json();
+                const rows = normalizeOpenRouterRows(payload);
+                renderOpenRouterRows(rows);
+            } catch (error) {
+                // Fallback to legacy single-key endpoint for compatibility.
+                try {
+                    const legacyResp = await fetch('/api/openrouter-credits');
+                    if (!legacyResp.ok) {
+                        throw new Error(`HTTP error! status: ${legacyResp.status}`);
+                    }
+                    const data = await legacyResp.json();
+                    renderOpenRouterRows([{
+                        id: 0,
+                        label: 'Legacy .env Key',
+                        email: '-',
+                        api_key_masked: 'env-key',
+                        status: 'ok',
+                        total_credits: data.total_credits || 0,
+                        total_usage: data.total_usage || 0,
+                        remaining: data.remaining || 0
+                    }]);
+                    showOpenRouterError('Showing legacy OPENROUTER_API_KEY data. Add backend key endpoints for full multi-key management.');
+                } catch (legacyError) {
+                    console.error('Error loading OpenRouter credits:', legacyError);
+                    renderOpenRouterRows([]);
+                    showOpenRouterError('Failed to load OpenRouter credit information: ' + legacyError.message);
+                }
+            } finally {
+                loadingSpinner.style.display = 'none';
+                creditContent.style.opacity = '1';
+            }
+        }
+
+        async function createOpenRouterKey(event) {
+            event.preventDefault();
+            hideOpenRouterError();
+
+            const email = document.getElementById('openRouterEmail').value.trim();
+            const apiKey = document.getElementById('openRouterApiKey').value.trim();
+            const label = document.getElementById('openRouterLabel').value.trim();
+
+            if (!email || !apiKey) {
+                showOpenRouterError('Email and API key are required.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/openrouter-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        api_key: apiKey,
+                        label: label || null,
+                        is_active: true
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                document.getElementById('openRouterKeyForm').reset();
+                await refreshOpenRouterSection();
+            } catch (error) {
+                showOpenRouterError('Failed to create OpenRouter key: ' + error.message);
+            }
+        }
+
+        async function editOpenRouterKey(recordId) {
+            if (!recordId) return;
+            hideOpenRouterError();
+
+            const nextEmail = window.prompt('Update email for this key:');
+            if (nextEmail === null) return;
+
+            const nextLabel = window.prompt('Update label (optional):', '');
+            if (nextLabel === null) return;
+
+            const nextApiKey = window.prompt('Enter new API key (leave empty to keep current):', '');
+            if (nextApiKey === null) return;
+
+            const activeRaw = window.prompt('Set active? (yes/no)', 'yes');
+            if (activeRaw === null) return;
+            const isActive = String(activeRaw).toLowerCase().trim() !== 'no';
+
+            try {
+                const response = await fetch(`/api/openrouter-keys/${recordId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: nextEmail.trim(),
+                        label: nextLabel.trim() || null,
+                        api_key: nextApiKey.trim() || null,
+                        is_active: isActive
+                    })
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                await refreshOpenRouterSection();
+            } catch (error) {
+                showOpenRouterError('Failed to update OpenRouter key: ' + error.message);
+            }
+        }
+
+        async function deleteOpenRouterKey(recordId) {
+            if (!recordId) return;
+            hideOpenRouterError();
+
+            const confirmed = window.confirm('Delete this OpenRouter key?');
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch(`/api/openrouter-keys/${recordId}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                await refreshOpenRouterSection();
+            } catch (error) {
+                showOpenRouterError('Failed to delete OpenRouter key: ' + error.message);
+            }
+        }
+
+        async function refreshSingleOpenRouterKey(recordId) {
+            if (!recordId) return;
+            await refreshOpenRouterSection();
+        }
+
+        async function refreshOpenRouterSection() {
+            await loadOpenRouterCredits();
+        }
+
+        async function loadScrapingDogCredits() {
+            const loadingSpinner = document.getElementById('loadingSpinnerScrapingDog');
+            const errorAlert = document.getElementById('errorAlertScrapingDog');
+            const errorMessage = document.getElementById('errorMessageScrapingDog');
+            const creditContent = document.getElementById('creditContentScrapingDog');
+
+            // Show loading, hide error
+            loadingSpinner.style.display = 'block';
+            errorAlert.style.display = 'none';
+            creditContent.style.opacity = '0.3';
+
+            try {
+                const response = await fetch('/api/scrapingdog-credits');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update values
+                document.getElementById('requestLimitScrapingDog').textContent = data.request_limit.toLocaleString();
+                document.getElementById('requestUsedScrapingDog').textContent = data.request_used.toLocaleString();
+                document.getElementById('remainingScrapingDog').textContent = data.remaining.toLocaleString();
+                
+                // Calculate percentage
+                const percentage = data.request_limit > 0 ? (data.remaining / data.request_limit * 100) : 0;
+                document.getElementById('percentageFillScrapingDog').style.width = percentage + '%';
+                document.getElementById('percentageTextScrapingDog').textContent = percentage.toFixed(1) + '% remaining';
+                
+                // Update last updated time
+                // document.getElementById('lastUpdatedScrapingDog').textContent = new Date().toLocaleString();
+                
+                // Hide loading, show content
+                loadingSpinner.style.display = 'none';
+                creditContent.style.opacity = '1';
+                
+            } catch (error) {
+                console.error('Error loading ScrapingDog credits:', error);
+                errorMessage.textContent = 'Failed to load ScrapingDog credit information: ' + error.message;
+                errorAlert.style.display = 'block';
+                loadingSpinner.style.display = 'none';
+                creditContent.style.opacity = '1';
+            }
+        }
+
+        async function loadAllCredits() {
+            // Load both APIs in parallel
+            await Promise.all([
+                loadOpenRouterCredits(),
+                loadScrapingDogCredits()
+            ]);
+        }
+
+        function refreshCredits() {
+            loadAllCredits();
+        }
+
+        document.getElementById('openRouterKeyForm') && document.getElementById('openRouterKeyForm').addEventListener('submit', createOpenRouterKey);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

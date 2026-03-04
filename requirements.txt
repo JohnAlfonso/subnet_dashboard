@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+psycopg[binary]
+psycopg_pool
+jinja2
+python-multipart
+requests
+python-dotenv
+bittensor

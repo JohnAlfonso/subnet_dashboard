@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miner Incentive Distribution - SN71</title>
+    <link rel="icon" type="image/x-icon" href="/asset/modern_favicon.ico">
+    <link rel="icon" type="image/png" sizes="16x16" href="/asset/modern_icon_16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/asset/modern_icon_32.png">
+    <script>
+        (function(){
+            try {
+                var t = localStorage.getItem('sn71-dashboard-theme');
+                var explicit = localStorage.getItem('sn71-dashboard-theme-user-set') === '1';
+                // Default to dark. Only respect light when user explicitly selected it.
+                if (t === 'light' && explicit) return;
+                document.documentElement.classList.add('theme-dark');
+            } catch (e) {
+                document.documentElement.classList.add('theme-dark');
+            }
+        })();
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { height: 100vh; overflow: hidden; background-color: #f8f9fa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; transition: background-color 0.25s ease; }
+        html.theme-dark, html.theme-dark body { background-color: #0f172a; }
+        .theme-toggle { display: flex; gap: 0; background: #e2e8f0; border-radius: 10px; padding: 4px; }
+        html.theme-dark .theme-toggle { background: #334155; }
+        .theme-toggle button { flex: 1; border: none; background: transparent; color: #64748b; padding: 8px 14px; font-size: 0.9rem; font-weight: 500; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        html.theme-dark .theme-toggle button { color: #94a3b8; }
+        .theme-toggle button:hover { color: #007bff; background: rgba(0,123,255,0.1); }
+        html.theme-dark .theme-toggle button:hover { color: #38bdf8; background: rgba(56,189,248,0.15); }
+        .theme-toggle button.active { background: #fff; color: #007bff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        html.theme-dark .theme-toggle button.active { background: #475569; color: #7dd3fc; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .main-content { width: 100%; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar {
+            background: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        html.theme-dark .top-bar { background: #1e293b; border-bottom-color: #334155; }
+        .top-bar-left { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+        .subnet-input-wrap { display: flex; align-items: center; gap: 8px; }
+        .subnet-label { font-size: 0.9rem; font-weight: 500; color: #6c757d; white-space: nowrap; }
+        html.theme-dark .subnet-label { color: #94a3b8; }
+        .subnet-input { width: 70px; padding: 6px 10px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.95rem; text-align: center; }
+        html.theme-dark .subnet-input { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+        .page-title { font-size: 1.8rem; font-weight: 600; color: #333; }
+        html.theme-dark .page-title { color: #f1f5f9; }
+        .content-area { flex: 1; overflow-y: auto; padding: 30px; }
+        html.theme-dark .content-area { background: #0f172a; }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+        }
+        html.theme-dark .stat-card { background: #1e293b; border-color: #334155; }
+        .stat-label { font-size: 0.75rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        html.theme-dark .stat-label { color: #94a3b8; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: #333; }
+        html.theme-dark .stat-value { color: #f1f5f9; }
+        .stat-value.primary { color: #007bff; }
+        .stat-value.success { color: #28a745; }
+        .stat-value.warning { color: #fd7e14; }
+        .stat-value.info { color: #17a2b8; }
+
+        .coldkey-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            border: 1px solid #eee;
+        }
+        html.theme-dark .coldkey-card { background: #1e293b; border-color: #334155; }
+        .coldkey-card h5 { font-size: 1rem; margin-bottom: 12px; color: #333; }
+        html.theme-dark .coldkey-card h5 { color: #f1f5f9; }
+        html.theme-dark .coldkey-input { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+        .coldkey-input-group { display: flex; gap: 10px; margin-bottom: 12px; }
+        .coldkey-input { flex: 1; padding: 10px 14px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.9rem; font-family: monospace; }
+        .coldkey-btn { padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .coldkey-btn:hover { background: #0056b3; }
+        .coldkey-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+        .coldkey-badge { background: #e7f1ff; color: #007bff; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-family: monospace; display: inline-flex; align-items: center; gap: 6px; }
+        .coldkey-badge .remove-btn { cursor: pointer; font-weight: bold; opacity: 0.7; }
+        .coldkey-badge .remove-btn:hover { opacity: 1; }
+
+        .chart-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+            border: 1px solid #eee;
+        }
+        html.theme-dark .chart-card { background: #1e293b; border-color: #334155; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .chart-title { font-size: 1.15rem; font-weight: 600; color: #333; }
+        html.theme-dark .chart-title { color: #f1f5f9; }
+        .csv-btn { padding: 8px 16px; background: #28a745; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
+        .csv-btn:hover { background: #218838; }
+        .highlight-info { background: #fff3cd; color: #856404; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; border: 1px solid #ffeaa7; }
+        html.theme-dark .highlight-info { background: #7c2d12; color: #fde68a; border-color: #ea580c; }
+        .clear-highlight-btn { background: transparent; border: none; color: inherit; cursor: pointer; margin-left: 8px; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 1rem; transition: background 0.2s; }
+        .clear-highlight-btn:hover { background: rgba(0,0,0,0.1); }
+        html.theme-dark .clear-highlight-btn:hover { background: rgba(255,255,255,0.15); }
+        .chart-container { height: 380px; position: relative; }
+
+        .table-card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #eee; }
+        html.theme-dark .table-card { background: #1e293b; border-color: #334155; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .table-title { font-size: 1.15rem; font-weight: 600; color: #333; }
+        html.theme-dark .table-title { color: #f1f5f9; }
+        .filter-checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; white-space: nowrap; color: #333; }
+        html.theme-dark .filter-checkbox-label { color: #e2e8f0; }
+        .search-box { padding: 8px 14px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.9rem; width: 260px; }
+        html.theme-dark .search-box { background: #0f172a; border-color: #475569; color: #e2e8f0; }
+        .miners-table { width: 100%; border-collapse: collapse; }
+        .miners-table thead { background: #f8f9fa; }
+        html.theme-dark .miners-table thead { background: #334155; }
+        .miners-table th { padding: 12px; text-align: left; font-weight: 600; font-size: 0.8rem; color: #495057; border-bottom: 2px solid #dee2e6; cursor: pointer; }
+        html.theme-dark .miners-table th { color: #e2e8f0; border-bottom-color: #475569; }
+        .miners-table th:hover { background: #e9ecef; }
+        html.theme-dark .miners-table th:hover { background: #475569; }
+        .miners-table td { padding: 12px; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+        html.theme-dark .miners-table td { border-bottom-color: #334155; color: #e2e8f0; }
+        .miners-table tr:hover { background: #f8f9fa; }
+        html.theme-dark .miners-table tbody tr:hover { background: #334155; }
+        .miners-table tr.owned-row { background: #e9ecef; }
+        html.theme-dark .miners-table tr.owned-row { background: #475569; }
+        .miners-table tr.owned-row:hover { background: #dee2e6; }
+        html.theme-dark .miners-table tr.owned-row:hover { background: #64748b; }
+        .rank-cell { font-weight: 600; color: #007bff; }
+        .incentive-cell { font-weight: 600; color: #28a745; }
+        .incentive-cell.owned { color: #e65100; }
+        .hotkey-cell { font-family: monospace; font-size: 0.85rem; color: #6c757d; }
+        .uid-cell { font-weight: 600; }
+        .owned-badge { background: #e65100; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+        .coldkey-color-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 4px; vertical-align: middle; border: 1px solid #ccc; }
+        html.theme-dark .coldkey-color-dot { border-color: #64748b; }
+        .coldkey-text { font-size: 0.75rem; color: #6c757d; font-family: monospace; }
+        html.theme-dark .coldkey-text { color: #94a3b8; }
+        .copy-btn { cursor: pointer; color: #007bff; opacity: 0; margin-left: 4px; transition: opacity 0.2s; }
+        html.theme-dark .copy-btn { color: #38bdf8; }
+        .miners-table tr:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { color: #0056b3; }
+        html.theme-dark .copy-btn:hover { color: #7dd3fc; }
+
+        .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center; }
+        html.theme-dark .loading-overlay { background: rgba(15,23,42,0.95); }
+        .loading-overlay.active { display: flex; }
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+        .pagination-info { color: #6c757d; font-size: 0.9rem; }
+        .pagination-buttons { display: flex; gap: 6px; }
+        .pagination-buttons button { padding: 8px 14px; border: 1px solid #dee2e6; background: #fff; border-radius: 8px; cursor: pointer; }
+        .pagination-buttons button:hover:not(:disabled) { background: #f8f9fa; }
+        .pagination-buttons button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pagination-buttons button.active { background: #007bff; color: #fff; border-color: #007bff; }
+        html.theme-dark .pagination-info { color: #94a3b8; }
+        html.theme-dark .pagination-buttons button { background: #334155; border-color: #475569; color: #e2e8f0; }
+        html.theme-dark .pagination-buttons button:hover:not(:disabled) { background: #475569; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <div class="page-title">Miner Incentive Distribution</div>
+                <div class="subnet-input-wrap">
+                    <label for="subnetInput" class="subnet-label">Subnet</label>
+                    <input type="number" id="subnetInput" class="subnet-input" min="0" max="255" value="71" placeholder="71" title="Subnet number (netuid)" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applySubnet(); }">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="applySubnet()" id="applySubnetBtn" title="Load this subnet">Load</button>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+                <div class="theme-toggle">
+                    <button type="button" id="themeLight" title="Light theme"><i class="bi bi-sun"></i> Light</button>
+                    <button type="button" id="themeDark" title="Dark theme"><i class="bi bi-moon"></i> Dark</button>
+                </div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadData(true)" id="refreshBtn"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+        </div>
+        <div class="content-area">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-label">Total Miners</div><div class="stat-value primary" id="totalMiners">-</div></div>
+                <div class="stat-card"><div class="stat-label">Average Incentive</div><div class="stat-value success" id="avgIncentive">-</div></div>
+                <div class="stat-card"><div class="stat-label">Top Incentive</div><div class="stat-value warning" id="topIncentive">-</div></div>
+                <div class="stat-card"><div class="stat-label">Immune Miners</div><div class="stat-value info" id="immuneMinersCount">-</div></div>
+                <div class="stat-card"><div class="stat-label">My Miners</div><div class="stat-value" id="myMinersCount">-</div></div>
+            </div>
+            <div class="coldkey-card">
+                <h5><i class="bi bi-key"></i> Register My Coldkeys</h5>
+                <div class="coldkey-input-group">
+                    <input type="text" class="coldkey-input" id="coldkeyInput" placeholder="Enter coldkey (min 40 chars)...">
+                    <button class="coldkey-btn" onclick="addColdkey()"><i class="bi bi-plus-circle"></i> Add</button>
+                </div>
+                <div class="coldkey-badges" id="coldkeyBadges"></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title" id="chartTitle">Miner Incentive Distribution — Subnet 71</div>
+                    <div style="display:flex;align-items:center;gap:16px">
+                        <div id="highlightInfo" class="highlight-info" style="display:none">
+                            <i class="bi bi-lightbulb-fill"></i> <span id="highlightCount">0</span> miners highlighted
+                            <button onclick="clearHighlights()" class="clear-highlight-btn" title="Clear all highlights"><i class="bi bi-x-circle"></i></button>
+                        </div>
+                        <button class="csv-btn" onclick="exportCSV()"><i class="bi bi-download"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="chart-container"><canvas id="incentiveChart"></canvas></div>
+            </div>
+            <div class="table-card">
+                <div class="table-header">
+                    <div class="table-title" id="tableTitle">Miner Leaderboard — Subnet 71</div>
+                    <div style="display:flex;align-items:center;gap:12px">
+                        <label class="filter-checkbox-label">
+                            <input type="checkbox" id="showOnlyMyMiners" onchange="filterTable()" style="cursor:pointer" checked>
+                            <span>My Miners Only</span>
+                        </label>
+                        <input type="text" class="search-box" id="searchBox" placeholder="Search UID, Hotkey or Coldkey..." oninput="filterTable()">
+                    </div>
+                </div>
+                <div style="overflow-x:auto">
+                    <table class="miners-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('rank')">Rank <i class="bi bi-arrow-down-up"></i></th>
+                                <th onclick="sortTable('uid')">UID <i class="bi bi-arrow-down-up"></i></th>
+                                <th onclick="sortTable('hotkey')">Hotkey <i class="bi bi-arrow-down-up"></i></th>
+                                <th onclick="sortTable('incentive')">Incentive (%) <i class="bi bi-arrow-down-up"></i></th>
+                                <th>Coldkey</th>
+                            </tr>
+                        </thead>
+                        <tbody id="minersTableBody"><tr><td colspan="5" style="text-align:center;padding:40px">Loading...</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="pagination-controls">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-buttons" id="paginationButtons"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="loading-overlay" id="loadingOverlay"><div class="spinner-border text-primary" style="width:3rem;height:3rem"></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // Data from backend: Bittensor Metagraph (netuid 71, finney)
+        // Structure: incentives[hotkey]=decimal, hotkeyToUid[hotkey]=uid, hotkeyToColdkey[hotkey]=coldkey
+        let minersArray = [];
+        let filteredMiners = [];
+        let chart = null;
+        let registeredColdkeys = [];
+        let currentPage = 1;
+        let rowsPerPage = 50;
+        let sortColumn = 'rank';
+        let sortDirection = 'asc';
+        let coldkeyColors = {}; // Cache colors for each coldkey
+        let highlightedColdkeys = []; // Track which coldkeys are highlighted
+
+        var THEME_KEY = 'sn71-dashboard-theme';
+        var THEME_USER_SET_KEY = 'sn71-dashboard-theme-user-set';
+        function getStoredTheme() {
+            try {
+                var t = localStorage.getItem(THEME_KEY);
+                var explicit = localStorage.getItem(THEME_USER_SET_KEY) === '1';
+                if (t === 'light' && explicit) return 'light';
+                return 'dark';
+            } catch (e) {
+                return 'dark';
+            }
+        }
+        function setTheme(theme) {
+            var isDark = theme === 'dark';
+            document.documentElement.classList.toggle('theme-dark', isDark);
+            var lightBtn = document.getElementById('themeLight'), darkBtn = document.getElementById('themeDark');
+            if (lightBtn) { lightBtn.classList.toggle('active', !isDark); lightBtn.setAttribute('aria-pressed', !isDark); }
+            if (darkBtn) { darkBtn.classList.toggle('active', isDark); darkBtn.setAttribute('aria-pressed', isDark); }
+            try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            setTheme(getStoredTheme());
+            document.getElementById('themeLight') && document.getElementById('themeLight').addEventListener('click', function() {
+                try { localStorage.setItem(THEME_USER_SET_KEY, '1'); } catch (e) {}
+                setTheme('light');
+            });
+            document.getElementById('themeDark') && document.getElementById('themeDark').addEventListener('click', function() {
+                try { localStorage.setItem(THEME_USER_SET_KEY, '1'); } catch (e) {}
+                setTheme('dark');
+            });
+            loadColdkeys();
+            loadData();
+            setInterval(loadData, 5 * 60 * 1000);
+        });
+
+        function loadColdkeys() {
+            try { registeredColdkeys = JSON.parse(localStorage.getItem('registeredColdkeys') || '[]'); } catch(e) { registeredColdkeys = []; }
+            displayColdkeys();
+        }
+        function saveColdkeys() { localStorage.setItem('registeredColdkeys', JSON.stringify(registeredColdkeys)); }
+        function displayColdkeys() {
+            var el = document.getElementById('coldkeyBadges');
+            if (registeredColdkeys.length === 0) { el.innerHTML = '<span style="color:#6c757d;font-size:0.9rem">No coldkeys registered</span>'; return; }
+            el.innerHTML = registeredColdkeys.map(function(ck) {
+                return '<div class="coldkey-badge">' + ck.substring(0,8) + '...' + ck.substring(ck.length-6) + ' <span class="remove-btn" onclick="removeColdkey(\'' + ck.replace(/'/g,"\\'") + '\')">×</span></div>';
+            }).join('');
+        }
+        function addColdkey() {
+            var input = document.getElementById('coldkeyInput');
+            var ck = input.value.trim();
+            if (ck.length < 40) { alert('Coldkey must be at least 40 characters'); return; }
+            if (registeredColdkeys.indexOf(ck) >= 0) { alert('Already registered'); return; }
+            registeredColdkeys.push(ck);
+            saveColdkeys();
+            displayColdkeys();
+            input.value = '';
+            updateStatistics();
+            filterTable();
+            renderChart();
+        }
+        function removeColdkey(ck) {
+            registeredColdkeys = registeredColdkeys.filter(function(c){ return c !== ck; });
+            saveColdkeys();
+            displayColdkeys();
+            updateStatistics();
+            filterTable();
+            renderChart();
+        }
+        function isMinerOwned(m) { return m.coldkey && registeredColdkeys.indexOf(m.coldkey) >= 0; }
+
+        // Vibrant color palette for registered coldkeys
+        var registeredColorPalette = [
+            'hsl(350, 85%, 55%)',  // Vibrant Red
+            'hsl(120, 75%, 45%)',  // Vibrant Green
+            'hsl(210, 90%, 55%)',  // Vibrant Blue
+            'hsl(280, 80%, 60%)',  // Vibrant Purple
+            'hsl(30, 90%, 55%)',   // Vibrant Orange
+            'hsl(180, 75%, 45%)',  // Vibrant Cyan
+            'hsl(50, 90%, 50%)',   // Vibrant Yellow
+            'hsl(320, 85%, 55%)',  // Vibrant Magenta
+            'hsl(90, 70%, 45%)',   // Vibrant Lime
+            'hsl(240, 85%, 60%)'   // Vibrant Indigo
+        ];
+        
+        // Distinct color palette for non-registered coldkeys
+        var coldkeyColorPalette = [
+            'hsl(0, 70%, 60%)',    // Red
+            'hsl(30, 75%, 55%)',   // Orange
+            'hsl(60, 70%, 50%)',   // Yellow
+            'hsl(90, 65%, 45%)',   // Yellow-Green
+            'hsl(120, 70%, 45%)',  // Green
+            'hsl(150, 65%, 45%)',  // Green-Cyan
+            'hsl(180, 70%, 50%)',  // Cyan
+            'hsl(210, 75%, 55%)',  // Blue
+            'hsl(240, 70%, 60%)',  // Blue-Purple
+            'hsl(270, 75%, 60%)',  // Purple
+            'hsl(300, 70%, 60%)',  // Magenta
+            'hsl(330, 75%, 55%)',  // Pink
+            'hsl(15, 65%, 55%)',   // Red-Orange
+            'hsl(45, 75%, 50%)',   // Gold
+            'hsl(75, 60%, 45%)',   // Lime
+            'hsl(105, 65%, 45%)',  // Spring Green
+            'hsl(135, 60%, 45%)',  // Sea Green
+            'hsl(165, 65%, 50%)',  // Turquoise
+            'hsl(195, 70%, 55%)',  // Sky Blue
+            'hsl(225, 70%, 58%)',  // Royal Blue
+            'hsl(255, 65%, 60%)',  // Violet
+            'hsl(285, 70%, 58%)',  // Orchid
+            'hsl(315, 70%, 58%)',  // Hot Pink
+            'hsl(345, 75%, 55%)'   // Crimson
+        ];
+        
+        // Generate consistent color for a coldkey using hash
+        function getColdkeyColor(coldkey) {
+            if (!coldkey) return 'rgba(128,128,128,0.6)';
+            if (coldkeyColors[coldkey]) return coldkeyColors[coldkey];
+            
+            // Check if this is a registered coldkey - use vibrant palette
+            var isRegistered = registeredColdkeys.indexOf(coldkey) >= 0;
+            if (isRegistered) {
+                var index = registeredColdkeys.indexOf(coldkey);
+                var color = registeredColorPalette[index % registeredColorPalette.length];
+                coldkeyColors[coldkey] = color;
+                return color;
+            }
+            
+            // For non-registered coldkeys, use distinct color palette
+            var hash = 0;
+            for (var i = 0; i < coldkey.length; i++) {
+                hash = coldkey.charCodeAt(i) + ((hash << 5) - hash);
+                hash = hash & hash;
+            }
+            
+            var paletteIndex = Math.abs(hash) % coldkeyColorPalette.length;
+            var color = coldkeyColorPalette[paletteIndex];
+            coldkeyColors[coldkey] = color;
+            return color;
+        }
+
+        // Convert HSL to RGBA for transparency
+        function hslToRgba(hsl, alpha) {
+            var match = hsl.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+            if (!match) return hsl;
+            
+            var h = parseInt(match[1]) / 360;
+            var s = parseInt(match[2]) / 100;
+            var l = parseInt(match[3]) / 100;
+            
+            var r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                var hue2rgb = function(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                var p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            
+            return 'rgba(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ',' + alpha + ')';
+        }
+
+        function getSubnetFromInput() {
+            var el = document.getElementById('subnetInput');
+            if (!el) return 71;
+            var n = parseInt(el.value, 10);
+            if (isNaN(n) || n < 0 || n > 255) return 71;
+            return n;
+        }
+        function applySubnet() {
+            loadData(true);
+        }
+        function loadData(forceRefresh) {
+            document.getElementById('loadingOverlay').classList.add('active');
+            var refreshBtn = document.getElementById('refreshBtn');
+            if (refreshBtn) refreshBtn.disabled = true;
+            var netuid = getSubnetFromInput();
+            var url = '/api/metagraph-data?netuid=' + netuid;
+            if (forceRefresh) url += '&refresh=1&t=' + Date.now();
+            
+            fetch(url).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+                .then(function(metagraphData) {
+                    processMetagraph(metagraphData);
+                    updateStatistics();
+                    renderChart();
+                    filterTable();
+                    updateHighlightInfo();
+                })
+                .catch(function(err) {
+                    console.error(err);
+                    alert('Failed to load data: ' + err.message);
+                })
+                .finally(function() {
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    var btn = document.getElementById('refreshBtn');
+                    if (btn) btn.disabled = false;
+                });
+        }
+
+        function processMetagraph(data) {
+            // API: /api/metagraph-data (Bittensor Metagraph). Incentive = emission share %.
+            var netuid = data.netuid != null ? data.netuid : getSubnetFromInput();
+            var subnetInput = document.getElementById('subnetInput');
+            if (subnetInput && (subnetInput.value === '' || parseInt(subnetInput.value, 10) !== netuid)) subnetInput.value = netuid;
+            var chartTitleEl = document.getElementById('chartTitle');
+            if (chartTitleEl) chartTitleEl.textContent = 'Miner Incentive Distribution — Subnet ' + netuid;
+            var tableTitleEl = document.getElementById('tableTitle');
+            if (tableTitleEl) tableTitleEl.textContent = 'Miner Leaderboard — Subnet ' + netuid;
+            minersArray = [];
+            var emissions = data.emissions || {};
+            var hotkeyToUid = data.hotkeyToUid || {};
+            var hotkeyToColdkey = data.hotkeyToColdkey || {};
+            var isValidator = data.isValidator || {};
+            var isImmune = data.isImmune || {};
+            var minerAge = data.minerAge || {};
+            var totalEmission = 0;
+            var minerEmissions = [];
+            Object.keys(emissions).forEach(function(hotkey) {
+                if (isValidator[hotkey]) return;
+                var uid = hotkeyToUid[hotkey];
+                if (uid === undefined) return;
+                var em = emissions[hotkey];
+                if (typeof em !== 'number' || em < 0) em = 0;
+                totalEmission += em;
+                minerEmissions.push({
+                    uid: uid,
+                    hotkey: hotkey,
+                    coldkey: hotkeyToColdkey[hotkey] || null,
+                    emission: em,
+                    rank: 0,
+                    immune: isImmune[hotkey] || false,
+                    age: minerAge[hotkey] || 0
+                });
+            });
+            var totalEmissionSafe = totalEmission > 0 ? totalEmission : 1;
+            minerEmissions.forEach(function(m) {
+                m.incentive = (m.emission / totalEmissionSafe) * 100;
+            });
+            minerEmissions.sort(function(a, b) { return b.incentive - a.incentive; });
+            minerEmissions.forEach(function(m, i) { m.rank = i + 1; });
+            minersArray = minerEmissions;
+            filteredMiners = minersArray.slice();
+        }
+
+        function updateStatistics() {
+            if (minersArray.length === 0) return;
+            var total = minersArray.length;
+            var sum = minersArray.reduce(function(s, m) { return s + m.incentive; }, 0);
+            var top = Math.max.apply(null, minersArray.map(function(m) { return m.incentive; }));
+            var myCount = minersArray.filter(isMinerOwned).length;
+            var immuneCount = minersArray.filter(function(m) { return m.immune; }).length;
+            document.getElementById('totalMiners').textContent = total;
+            document.getElementById('avgIncentive').textContent = (sum / total).toFixed(4) + '%';
+            document.getElementById('topIncentive').textContent = top.toFixed(4) + '%';
+            document.getElementById('immuneMinersCount').textContent = immuneCount;
+            document.getElementById('myMinersCount').textContent = myCount;
+        }
+
+        function updateHighlightInfo() {
+            var highlightInfoEl = document.getElementById('highlightInfo');
+            var highlightCountEl = document.getElementById('highlightCount');
+            
+            if (highlightedColdkeys.length === 0) {
+                highlightInfoEl.style.display = 'none';
+                return;
+            }
+            
+            // Count miners in highlighted coldkeys
+            var count = minersArray.filter(function(m) {
+                return highlightedColdkeys.indexOf(m.coldkey) >= 0;
+            }).length;
+            
+            highlightCountEl.textContent = count;
+            highlightInfoEl.style.display = 'block';
+        }
+
+        function clearHighlights() {
+            highlightedColdkeys = [];
+            renderChart();
+            updateHighlightInfo();
+        }
+
+        function renderChart() {
+            if (minersArray.length === 0) return;
+            var ctx = document.getElementById('incentiveChart');
+            if (chart) chart.destroy();
+            
+            // Group miners by coldkey
+            var coldkeyGroups = {};
+            minersArray.forEach(function(m) {
+                // Filter out miners with incentive > 4%
+                if (m.incentive > 4) return;
+                
+                var ck = m.coldkey || 'unknown';
+                if (!coldkeyGroups[ck]) coldkeyGroups[ck] = [];
+                coldkeyGroups[ck].push({ x: m.rank, y: m.incentive, miner: m });
+            });
+            
+            // Create dataset for each coldkey (split by immune status for different point styles)
+            var datasets = [];
+            var coldkeyToIndex = {}; // Map coldkey to dataset index
+            Object.keys(coldkeyGroups).forEach(function(coldkey) {
+                var miners = coldkeyGroups[coldkey];
+                var isRegistered = registeredColdkeys.indexOf(coldkey) >= 0;
+                var isHighlighted = highlightedColdkeys.indexOf(coldkey) >= 0;
+                var baseColor = getColdkeyColor(coldkey);
+                var bgColor = hslToRgba(baseColor, isHighlighted ? 1 : 0.7);
+                var borderColor = isHighlighted ? 'rgba(255,215,0,1)' : (isRegistered ? 'rgba(255,140,0,1)' : hslToRgba(baseColor, 0.95));
+                
+                // Split miners into immune and non-immune
+                var immuneMiners = miners.filter(function(p) { return p.miner.immune; });
+                var nonImmuneMiners = miners.filter(function(p) { return !p.miner.immune; });
+                
+                // Calculate sizes
+                var baseRadius = isHighlighted ? 7 : (isRegistered ? 5 : 3);
+                var immuneRadius = Math.round(baseRadius * 1.2);
+                var baseHoverRadius = isHighlighted ? 10 : (isRegistered ? 8 : 6);
+                var immuneHoverRadius = Math.round(baseHoverRadius * 1.2);
+                
+                // Generate label
+                var label = coldkey === 'unknown' ? 'Unknown Coldkey' : coldkey.substring(0, 8) + '...' + coldkey.substring(coldkey.length - 6);
+                if (isHighlighted) label = '💡 ' + label;
+                else if (isRegistered) label = '⭐ ' + label;
+                
+                coldkeyToIndex[coldkey] = datasets.length;
+                
+                // Add non-immune miners dataset (circles)
+                if (nonImmuneMiners.length > 0) {
+                    datasets.push({
+                        label: label,
+                        data: nonImmuneMiners,
+                        backgroundColor: bgColor,
+                        borderColor: borderColor,
+                        borderWidth: isHighlighted ? 3 : (isRegistered ? 1.5 : 1),
+                        pointRadius: baseRadius,
+                        pointHoverRadius: baseHoverRadius,
+                        pointStyle: 'circle',
+                        coldkey: coldkey,
+                        isImmune: false
+                    });
+                }
+                
+                // Add immune miners dataset (rectangles)
+                if (immuneMiners.length > 0) {
+                    datasets.push({
+                        label: nonImmuneMiners.length > 0 ? '' : label,
+                        data: immuneMiners,
+                        backgroundColor: bgColor,
+                        borderColor: borderColor,
+                        borderWidth: isHighlighted ? 3 : (isRegistered ? 1.5 : 1),
+                        pointRadius: immuneRadius,
+                        pointHoverRadius: immuneHoverRadius,
+                        pointStyle: 'rectRot',
+                        coldkey: coldkey,
+                        isImmune: true
+                    });
+                }
+            });
+            
+            // Sort datasets: registered coldkeys first, then by total number of miners per coldkey
+            datasets.sort(function(a, b) {
+                // Check if coldkeys are registered (use label or coldkey property)
+                var aIsRegistered = registeredColdkeys.indexOf(a.coldkey) >= 0;
+                var bIsRegistered = registeredColdkeys.indexOf(b.coldkey) >= 0;
+                if (aIsRegistered && !bIsRegistered) return -1;
+                if (!aIsRegistered && bIsRegistered) return 1;
+                
+                // Count total miners for each coldkey
+                var aTotal = datasets.filter(function(d) { return d.coldkey === a.coldkey; }).reduce(function(sum, d) { return sum + d.data.length; }, 0);
+                var bTotal = datasets.filter(function(d) { return d.coldkey === b.coldkey; }).reduce(function(sum, d) { return sum + d.data.length; }, 0);
+                return bTotal - aTotal;
+            });
+            
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            display: true, 
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 10,
+                                font: { size: 10 },
+                                filter: function(legendItem, chartData) {
+                                    // Hide datasets with empty labels (immune-only datasets when non-immune exist)
+                                    return chartData.datasets[legendItem.datasetIndex].label !== '';
+                                }
+                            },
+                            onClick: function(e, legendItem, legend) {
+                                // Custom click handler - toggle highlight instead of hiding
+                                var index = legendItem.datasetIndex;
+                                var dataset = chart.data.datasets[index];
+                                var coldkey = dataset.coldkey;
+                                
+                                // Toggle highlight
+                                var idx = highlightedColdkeys.indexOf(coldkey);
+                                if (idx >= 0) {
+                                    highlightedColdkeys.splice(idx, 1);
+                                } else {
+                                    highlightedColdkeys.push(coldkey);
+                                }
+                                
+                                // Re-render chart with updated highlights
+                                renderChart();
+                                updateHighlightInfo();
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var m = ctx.raw.miner;
+                                    if (!m) return 'Incentive: ' + ctx.raw.y.toFixed(4) + '%';
+                                    var lines = [
+                                        'Rank #' + m.rank,
+                                        'UID: ' + m.uid,
+                                        'Incentive: ' + m.incentive.toFixed(4) + '%',
+                                        'Hotkey: ' + (m.hotkey || '').substring(0,16) + '...',
+                                        'Coldkey: ' + (m.coldkey ? m.coldkey.substring(0,16) + '...' : 'N/A')
+                                    ];
+                                    if (m.immune) lines.push('🛡️ Immune (' + m.age.toLocaleString() + ' blocks)');
+                                    if (isMinerOwned(m)) lines.push('⭐ Your Miner');
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Rank' }, min: 0, reverse: true, grid: { color: 'rgba(0,0,0,0.06)' } },
+                        y: { beginAtZero: true, title: { display: true, text: 'Incentive (%)' }, grid: { color: 'rgba(0,0,0,0.06)' } }
+                    }
+                }
+            });
+        }
+
+        function renderTable() {
+            var tbody = document.getElementById('minersTableBody');
+            if (filteredMiners.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px">No miners</td></tr>';
+                return;
+            }
+            var sorted = filteredMiners.slice().sort(function(a, b) {
+                var va = a[sortColumn], vb = b[sortColumn];
+                if (sortColumn === 'hotkey') { va = (va || '').toLowerCase(); vb = (vb || '').toLowerCase(); }
+                if (sortColumn === 'immune') { va = a.immune ? 1 : 0; vb = b.immune ? 1 : 0; }
+                if (va < vb) return sortDirection === 'asc' ? -1 : 1;
+                if (va > vb) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+            var start = (currentPage - 1) * rowsPerPage;
+            var pageData = sorted.slice(start, start + rowsPerPage);
+            tbody.innerHTML = pageData.map(function(m) {
+                var owned = isMinerOwned(m);
+                var hotkeyEsc = (m.hotkey || '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                var coldkeyEsc = (m.coldkey || 'N/A').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                var coldkeyShort = m.coldkey ? (m.coldkey.substring(0,8) + '...' + m.coldkey.substring(m.coldkey.length-6)) : 'N/A';
+                var coldkeyColor = getColdkeyColor(m.coldkey);
+                var coldkeyDisplay = '<span class="coldkey-color-dot" style="background:' + coldkeyColor + '"></span><span class="coldkey-text" title="' + coldkeyEsc + '">' + coldkeyShort + '</span>' + 
+                    (m.coldkey ? ' <i class="bi bi-clipboard copy-btn" onclick="copyToClipboard(\'' + coldkeyEsc + '\', this)"></i>' : '');
+                
+                return '<tr class="' + (owned ? 'owned-row' : '') + '" title="Coldkey: ' + coldkeyEsc + '">' +
+                    '<td class="rank-cell">#' + m.rank + '</td>' +
+                    '<td class="uid-cell">' + m.uid + '</td>' +
+                    '<td class="hotkey-cell">' + (m.hotkey || '').substring(0,20) + '... <i class="bi bi-clipboard copy-btn" onclick="copyToClipboard(\'' + hotkeyEsc + '\', this)"></i></td>' +
+                    '<td class="incentive-cell ' + (owned ? 'owned' : '') + '">' + m.incentive.toFixed(4) + '%</td>' +
+                    '<td>' + coldkeyDisplay + '</td></tr>';
+            }).join('');
+            var totalRows = sorted.length;
+            var totalPages = Math.ceil(totalRows / rowsPerPage);
+            document.getElementById('paginationInfo').textContent = 'Showing ' + (start + 1) + '-' + Math.min(start + rowsPerPage, totalRows) + ' of ' + totalRows;
+            var btns = '<button onclick="changePage(' + (currentPage - 1) + ')" ' + (currentPage === 1 ? 'disabled' : '') + '>Prev</button>';
+            for (var i = 1; i <= Math.min(5, totalPages); i++) {
+                var p = currentPage <= 3 ? i : currentPage - 3 + i;
+                if (p <= totalPages) btns += '<button onclick="changePage(' + p + ')" class="' + (p === currentPage ? 'active' : '') + '">' + p + '</button>';
+            }
+            btns += '<button onclick="changePage(' + (currentPage + 1) + ')" ' + (currentPage === totalPages ? 'disabled' : '') + '>Next</button>';
+            document.getElementById('paginationButtons').innerHTML = btns;
+        }
+
+        function sortTable(col) {
+            if (sortColumn === col) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            else { sortColumn = col; sortDirection = 'asc'; }
+            currentPage = 1;
+            renderTable();
+        }
+        function filterTable() {
+            var q = document.getElementById('searchBox').value.toLowerCase();
+            var showOnlyMine = document.getElementById('showOnlyMyMiners').checked;
+            
+            filteredMiners = minersArray.filter(function(m) {
+                // Apply "My Miners Only" filter
+                if (showOnlyMine && !isMinerOwned(m)) return false;
+                
+                // Apply search filter
+                if (!q) return true;
+                return String(m.uid).indexOf(q) >= 0 || 
+                       (m.hotkey || '').toLowerCase().indexOf(q) >= 0 || 
+                       (m.coldkey || '').toLowerCase().indexOf(q) >= 0;
+            });
+            
+            currentPage = 1;
+            renderTable();
+        }
+        function changePage(p) {
+            var totalPages = Math.ceil(filteredMiners.length / rowsPerPage);
+            if (p < 1 || p > totalPages) return;
+            currentPage = p;
+            renderTable();
+        }
+        function copyToClipboard(text, element) {
+            if (!text) {
+                showCopyTooltip(element, 'Nothing to copy', 'error');
+                return;
+            }
+            
+            if (!navigator.clipboard) {
+                // Fallback for browsers without clipboard API
+                var textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showCopyTooltip(element, 'Copied!', 'success');
+                } catch (err) {
+                    document.body.removeChild(textArea);
+                    showCopyTooltip(element, 'Copy failed', 'error');
+                }
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showCopyTooltip(element, 'Copied!', 'success');
+            }).catch(function(err) {
+                console.error('Failed to copy:', err);
+                showCopyTooltip(element, 'Copy failed', 'error');
+            });
+        }
+        
+        function showCopyTooltip(element, message, status) {
+            // Change icon based on status
+            var originalClass = element.className;
+            if (status === 'success') {
+                element.className = 'bi bi-check-circle-fill copy-btn';
+                element.style.color = '#28a745';
+            } else {
+                element.className = 'bi bi-x-circle-fill copy-btn';
+                element.style.color = '#dc3545';
+            }
+            
+            // Create and show tooltip
+            var tooltip = document.createElement('div');
+            tooltip.className = 'copy-tooltip';
+            tooltip.textContent = message;
+            tooltip.style.cssText = 'position:absolute;background:#000;color:#fff;padding:4px 8px;border-radius:4px;font-size:0.75rem;white-space:nowrap;z-index:10000;pointer-events:none;';
+            
+            var rect = element.getBoundingClientRect();
+            tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+            tooltip.style.top = (rect.top - 30) + 'px';
+            tooltip.style.transform = 'translateX(-50%)';
+            
+            if (status === 'success') {
+                tooltip.style.background = '#28a745';
+            } else {
+                tooltip.style.background = '#dc3545';
+            }
+            
+            document.body.appendChild(tooltip);
+            
+            // Reset after 1.5 seconds
+            setTimeout(function() {
+                element.className = originalClass;
+                element.style.color = '';
+                if (tooltip.parentNode) {
+                    document.body.removeChild(tooltip);
+                }
+            }, 1500);
+        }
+        function exportCSV() {
+            if (minersArray.length === 0) { alert('No data'); return; }
+            var csv = 'Rank,UID,Hotkey,Coldkey,Incentive,Immune,Age (blocks),Status\n';
+            minersArray.slice().sort(function(a,b) { return a.rank - b.rank; }).forEach(function(m) {
+                var h = (m.hotkey || '').replace(/"/g, '""');
+                var c = (m.coldkey || 'N/A').replace(/"/g, '""');
+                csv += m.rank + ',' + m.uid + ',"' + h + '","' + c + '",' + m.incentive.toFixed(6) + ',' + (m.immune ? 'Yes' : 'No') + ',' + m.age + ',' + (isMinerOwned(m) ? 'My Miner' : 'Other') + '\n';
+            });
+            var blob = new Blob([csv], { type: 'text/csv' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'miners_incentive_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+    </script>
+</body>
+</html>
